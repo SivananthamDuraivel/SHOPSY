@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 const Cart = () => {
     const [products, setProducts] = useState([]);
-    const [removeQuantity, setRemoveQuantity] = useState(0);
+    const [quantities, setQuantities] = useState({}); // Object to store quantities by product ID
     const [total, setTotal] = useState(0);
     const navigate = useNavigate();
 
@@ -15,6 +15,12 @@ const Cart = () => {
             if (res) {
                 setProducts(res.data.cart);
                 setTotal(res.data.cartValue);
+                // Initialize quantities state
+                const initialQuantities = res.data.cart.reduce((acc, product) => {
+                    acc[product._id] = ''; // Initialize with empty string
+                    return acc;
+                }, {});
+                setQuantities(initialQuantities);
             }
         } catch (err) {
             console.log('load catch @cart : ', err);
@@ -25,20 +31,29 @@ const Cart = () => {
         loadProducts();
     }, []);
 
+    const handleQuantityChange = (id, value) => {
+        setQuantities(prev => ({
+            ...prev,
+            [id]: value
+        }));
+    };
+
     const removeFromCart = async (e, id, quantity, pId) => {
         e.preventDefault();
-        console.log("PID : ",pId)
-        if (removeQuantity < 0 || removeQuantity > quantity) {
-            window.alert("please choose appropriate quantity");
+        const qtyToRemove = parseInt(quantities[id], 10);
+        if (isNaN(qtyToRemove) || qtyToRemove < 0 || qtyToRemove > quantity) {
+            window.alert("Please choose an appropriate quantity");
             return;
         }
         try {
-            const res = await axios.post("http://localhost:4090/products/removeFromCart", { productId: id, removeQuantity: removeQuantity, pId: pId });
+            const res = await axios.post("http://localhost:4090/products/removeFromCart", { productId: id, removeQuantity: qtyToRemove, pId: pId });
             if (res.data === "updated") {
-                window.alert("item removed from cart");
-                setRemoveQuantity(0)
+                window.alert("Item removed from cart");
+                setQuantities(prev => ({
+                    ...prev,
+                    [id]: '' // Clear the quantity input for this product
+                }));
                 loadProducts(); // Reload products after removal
-                
             }
         } catch (err) {
             console.log(err);
@@ -69,8 +84,14 @@ const Cart = () => {
                                 <p>Rating: {product.rating}</p>
                                 <p>Category: {product.category}</p>
                                 <form className='removeForm' onSubmit={(e) => removeFromCart(e, product._id, product.quantity, product.pId)} >
-                                    <input type="number" placeholder='enter the quantity' onChange={(e) => setRemoveQuantity(e.target.value)} value={removeQuantity} required />
-                                    <button type='submit' >Remove</button>
+                                    <input
+                                        type="number"
+                                        placeholder='Enter the quantity'
+                                        onChange={(e) => handleQuantityChange(product._id, e.target.value)}
+                                        value={quantities[product._id] || ''}
+                                        required
+                                    />
+                                    <button type='submit'>Remove</button>
                                 </form>
                             </div>
                         </div>

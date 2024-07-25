@@ -5,8 +5,8 @@ const withAuth = async(req,res,next)=>{
     try{
         const token = req.cookies.myToken
         console.log("midd: ",token)
-        if(!token)
-            return res.json("")
+        if(!token || token.length<=0)
+            return
         const decoded= await jwt.verify(token,process.env.SECRET_KEY)
         const user= await userModel.findById(decoded.id)
         //console.log(decoded.id +" ::::"+user)

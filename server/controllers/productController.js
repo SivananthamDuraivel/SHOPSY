@@ -4,7 +4,7 @@ const userModel = require('../models/userModel')
 const loadProducts = async(req,res)=>{
     console.log("entered loadProducts")
     const {price, rating, category } = req.body;
-    console.log(price+"::"+rating+"::"+category)
+    // console.log(price+"::"+rating+"::"+category)
 
     let filters = {};
     if (price && price>0 ) filters.price = { $lte: price };
@@ -17,11 +17,13 @@ const loadProducts = async(req,res)=>{
 
 const addProduct = async(req,res)=>{
     try{
+        console.log("REACHED ADD CONTROLLER")
         //console.log(req.user.role)
         if(req.user.role!=="admin")
             return res.json("you are not an admin")
 
         const {picture,name,price,available,availableUnit,rating,category}=req.body
+        console.log("PIC : ",picture)
         if(picture && picture.length>0)
             await productModel.create({picture,name,price,available,availableUnit,rating,category})
         else

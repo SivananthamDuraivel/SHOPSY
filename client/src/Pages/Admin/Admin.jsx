@@ -3,40 +3,39 @@ import axios from 'axios';
 import '../Products/Products.css';
 import { useNavigate } from 'react-router-dom';
 
-
 const Admin = () => {
-
     const [products, setProducts] = useState([]);
 
     const [price, setPrice] = useState('');
     const [rating, setRating] = useState('');
     const [category, setCategory] = useState('');
 
+    const [quantities, setQuantities] = useState({});
+
     const [filter, setFilter] = useState(false);
     const [add, setAdd] = useState(false);
 
-    const [img, setImg] = useState();
-    const [name, setName] = useState();
-    const [pprice, setPPrice] = useState();
-    const [status, setStatus] = useState();
-    const [quantity, setQuantity] = useState();
-    const [rrating, setRRating] = useState();
-    const [ccategory, setCCategory] = useState();
+    const [img, setImg] = useState('');
+    const [name, setName] = useState('');
+    const [pprice, setPPrice] = useState('');
+    const [status, setStatus] = useState('');
+    const [quantity, setQuantity] = useState('');
+    const [rrating, setRRating] = useState('');
+    const [ccategory, setCCategory] = useState('');
 
     const [toggleEdit, setToggleEdit] = useState(false);
-    const [showSaveCancel, setshowSaveCancel] = useState(false);
-    const [editableId, setEditableId] = useState();
+    const [showSaveCancel, setShowSaveCancel] = useState(false);
+    const [editableId, setEditableId] = useState(null);
 
-    const [editableImg, setEditableImg] = useState();
-    const [editableName, setEditableName] = useState();
-    const [editablePrice, setEditablePrice] = useState();
-    const [editableStatus, setEditableStatus] = useState();
-    const [editableQuantity, setEditableQuantity] = useState();
-    const [editableRating, setEditableRating] = useState();
-    const [editableCategory, setEditableCategory] = useState();
+    const [editableImg, setEditableImg] = useState('');
+    const [editableName, setEditableName] = useState('');
+    const [editablePrice, setEditablePrice] = useState('');
+    const [editableStatus, setEditableStatus] = useState('');
+    const [editableQuantity, setEditableQuantity] = useState('');
+    const [editableRating, setEditableRating] = useState('');
+    const [editableCategory, setEditableCategory] = useState('');
 
     const handleToggleEdit = (product) => {
-        console.log("ID : ", product._id);
         setEditableId(product._id);
         setEditableImg(product.picture);
         setEditableName(product.name);
@@ -45,12 +44,11 @@ const Admin = () => {
         setEditableQuantity(product.availableUnit);
         setEditableRating(product.rating);
         setEditableCategory(product.category);
-    }
+    };
 
     const loadProducts = async () => {
         await axios.post('http://localhost:4090/products/', { price: price, rating: rating, category: category })
             .then(res => {
-                console.log("LOADING : ", res);
                 if (res) setProducts(res.data);
             })
             .catch(err => console.log('load catch : ', err));
@@ -74,33 +72,58 @@ const Admin = () => {
             }, { new: true })
                 .then(res => {
                     if (res.data === "edited")
-                        window.alert("product edited successfully");
+                        window.alert("Product edited successfully");
                     else
-                        window.alert("can't edit right now :( ");
+                        window.alert("Can't edit right now :(");
                 })
                 .catch(err => console.log("edit catch res : ", err));
             setEditableId(null);
-            setshowSaveCancel(false);
+            setShowSaveCancel(false);
             loadProducts();
         }
         catch (err) {
             console.log("save catch : ", err);
         }
-    }
+    };
 
     const handleApplyFilters = (e) => {
         e.preventDefault();
         loadProducts();
-    }
+    };
 
     const handleAdd = async (e) => {
         e.preventDefault();
         try {
+            var imgUrl=""
+            console.log("PIC:",img)
+            try{
+                if (img) {
+
+                    const data = new FormData();
+                    data.append("file", img);
+                    data.append("upload_preset", "chatApp");
+                    data.append("cloud_name", "deid8tlfv");
+
+                    axios.defaults.withCredentials = false;
+                    const uploadResponse = await axios.post("https://api.cloudinary.com/v1_1/deid8tlfv/image/upload", data);
+                    console.log("RES : ",uploadResponse)
+                    imgUrl = uploadResponse.data.url;
+                    console.log("URL : ", imgUrl)
+
+                }
+            }
+            catch(err)
+            {
+                console.log("UPLOAD : ",err)
+            }
+            console.log("ADDING")
+            axios.defaults.withCredentials=true
             await axios.post('http://localhost:4090/products/addProduct',
-                { picture: img, name: name, price: pprice, available: status, availableUnit: quantity, rating: rrating, category: ccategory })
+                { picture: imgUrl, name: name, price: pprice, available: status, availableUnit: quantity, rating: rrating, category: ccategory })
                 .then(res => {
                     if (res.data === "added") {
-                        window.alert("product added successfully");
+                        window.alert("Product added successfully");
+                        setAdd(false)
                         loadProducts();
                     }
                 })
@@ -109,9 +132,7 @@ const Admin = () => {
         catch (err) {
             console.log(err);
         }
-    }
-
-   
+    };
 
     return (
         <div>
@@ -128,7 +149,7 @@ const Admin = () => {
                         <label>Product Name : </label><input type="text" onChange={(e) => setName(e.target.value)} required /><br /><br />
                         <label>Price : </label><input type="number" onChange={(e) => setPPrice(e.target.value)} required /><br /><br />
                         <label>Status : </label><input type="text" onChange={(e) => setStatus(e.target.value)} required /><br /><br />
-                        <label>Available Units : </label><input type="number"  onChange={(e) => setQuantity(e.target.value)} required /><br /><br />
+                        <label>Available Units : </label><input type="number" onChange={(e) => setQuantity(e.target.value)} required /><br /><br />
                         <label>Rating : </label><input type="number" step="0.1" onChange={(e) => setRRating(e.target.value)} required /><br /><br />
                         <label>Category : </label><input type="text" onChange={(e) => setCCategory(e.target.value)} required /><br /><br /><br />
                         <button type='button' onClick={() => setAdd(false)}>CANCEL</button>
@@ -159,7 +180,6 @@ const Admin = () => {
                             </select>
                         </div>
                         <button type="submit">Apply Filters</button>
-                        
                     </form>
                 </div>
             ) : null}
@@ -171,8 +191,8 @@ const Admin = () => {
                             {(product._id === editableId) ? (
                                 <div>
                                     <img src={product.picture} alt={product.name} /><br />
-                                    <label>Choose new Image : </label><input type="file" onChange={(e) => setEditableImg(e.target.files[0])} /><br /><br />
-                                    <div className='card-detials'>
+                                    <label>Choose new Image : </label><input type="file" onChange={(e) => handleImageUpload(e.target.files[0], setEditableImg)} /><br /><br />
+                                    <div className='card-details'>
                                         <label>Product Name : </label><input type="text" value={editableName} onChange={(e) => setEditableName(e.target.value)} /><br />
                                         <label>Price : </label><input type="number" value={editablePrice} onChange={(e) => setEditablePrice(e.target.value)} /><br />
                                         <label>Status : </label><input type="text" value={editableStatus} onChange={(e) => setEditableStatus(e.target.value)} /><br />
@@ -180,10 +200,10 @@ const Admin = () => {
                                         <label>Rating : </label><input type="number" value={editableRating} onChange={(e) => setEditableRating(e.target.value)} /><br />
                                         <label>Category : </label><input type="text" value={editableCategory} onChange={(e) => setEditableCategory(e.target.value)} /><br /><br />
                                     </div>
-                                    {(showSaveCancel) ? (
+                                    {showSaveCancel ? (
                                         <div style={{ 'display': 'inline' }}>
                                             <button onClick={() => { handleSave() }}>save</button>
-                                            <button onClick={() => { setshowSaveCancel(false); setEditableId(null) }}>cancel</button>
+                                            <button onClick={() => { setShowSaveCancel(false); setEditableId(null) }}>cancel</button>
                                         </div>
                                     ) : null}
                                 </div>
@@ -198,7 +218,7 @@ const Admin = () => {
                                         <p>Rating: {product.rating}</p>
                                         <p>Category: {product.category}</p>
                                         <br />
-                                        <button onClick={() => { handleToggleEdit(product); setshowSaveCancel(true) }}>edit</button>
+                                        <button onClick={() => { handleToggleEdit(product); setShowSaveCancel(true) }}>edit</button>
                                     </div>
                                 </div>
                             )}
